@@ -1,0 +1,7 @@
+*.spec
+build
+dist
+venv
+main.build
+main.dist
+main.exe
