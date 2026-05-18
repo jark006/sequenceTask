@@ -1,4 +1,5 @@
 *.spec
+*.log
 build
 dist
 venv

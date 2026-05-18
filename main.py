@@ -1,21 +1,28 @@
-import pyautogui
+
+import io
 import time
 import csv
 import os
 import sys
-import cv2
 import logging
 import datetime
-import win32gui, win32con
-import pyperclip
-import io
 from logging.handlers import RotatingFileHandler
+
+import pyperclip
+import pyautogui
+import cv2
+import win32gui, win32con
+import ctypes
+
+r'''
+pip install pyperclip pyautogui opencv-python pywin32
+pywin32_postinstall -install
+'''
 
 # 常量定义
 DEFAULT_CONFIDENCE = 0.9
 DEFAULT_MAX_WAITING = 30  # 默认最大等待时间
-DEFAULT_CSV_FILE = "OperationSequence.csv"
-LOG_FILE = "AutoTask.log"
+LOG_FILE = "sequenceTask.log"
 log_path = os.path.join(os.path.dirname(sys.argv[0]), LOG_FILE)
 
 # 支持的操作类型
@@ -61,7 +68,7 @@ def minimize_window():
         logging.info("已最小化当前窗口")
     else:
         logging.error("无法获取当前窗口句柄")
-        exit(1)
+        sys.exit(1)
 
 
 def find_image(sequence_dir: str, image_fileName: str, max_waiting: int):
@@ -256,7 +263,7 @@ def run_automation():
 
         if operation not in SUPPORTED_OPERATIONS:
             logging.warning(f"不支持的操作类型: [{row}] [{operation}]")
-            exit(-1)
+            sys.exit(-1)
 
         operationList.append((wait_time, operation, param, max_waiting))
 
@@ -271,13 +278,17 @@ def run_automation():
         # 执行操作, 如果失败则终止程序
         if not execute_operation(sequence_dir, wait_time, operation, param, max_waiting):
             logging.error(f"执行步骤{cnt}失败, 终止程序")
-            exit(-1)
+            sys.exit(-1)
 
     logging.info("操作序列执行完成")
 
 
 if __name__ == "__main__":
     logging.info("=" * 50)
+    
+    # 告诉操作系统使用程序自身的dpi适配
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+
     try:
         # minimize_window()
         run_automation()
