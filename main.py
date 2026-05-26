@@ -1,4 +1,3 @@
-
 import io
 import time
 import csv
@@ -7,8 +6,6 @@ import sys
 import logging
 import datetime
 from logging.handlers import RotatingFileHandler
-
-import pyperclip
 import pyautogui
 import cv2
 import win32gui, win32con
@@ -105,6 +102,13 @@ def find_image(sequence_dir: str, image_fileName: str, max_waiting: int):
     return None
 
 
+def type_text_via_win32(text: str):
+    """通过 Windows WM_CHAR 消息直接向目标窗口输入 Unicode 文本"""
+    hwnd = win32gui.GetForegroundWindow()
+    for char in text:
+        win32gui.PostMessage(hwnd, win32con.WM_CHAR, ord(char), 0)
+
+
 def execute_operation(sequence_dir: str, wait_time: float, operation: str, param: str, max_waiting: int):
     """执行指定的操作"""
 
@@ -187,9 +191,7 @@ def execute_operation(sequence_dir: str, wait_time: float, operation: str, param
                 text = datetime.datetime.now().strftime(
                     "[%Y-%m-%d %H:%M:%S] 每日签到"
                 )
-            pyperclip.copy(text)  # 将文本复制到剪贴板
-            time.sleep(0.1)  # 等待剪贴板更新
-            pyautogui.hotkey('Ctrl', 'V')
+            type_text_via_win32(text)
             logging.info(f"输入文本: {text}")
 
         case _:
@@ -203,8 +205,14 @@ def run_automation():
 
     if len(sys.argv) == 1:
         return
-    
-    sequence_dir = os.path.join(os.path.dirname(sys.argv[0]),sys.argv[1])
+
+    raw = sys.argv[1]
+    # 1. 直接作为路径尝试（支持绝对路径和相对路径）
+    if os.path.exists(os.path.join(raw, "sequence.csv")):
+        sequence_dir = raw
+    else:
+        # 2. 兼容旧行为：作为脚本同级子目录
+        sequence_dir = os.path.join(os.path.dirname(sys.argv[0]), raw)
     csv_path = os.path.join(sequence_dir, "sequence.csv")
 
     if not os.path.exists(csv_path):
@@ -290,7 +298,6 @@ if __name__ == "__main__":
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
 
     try:
-        # minimize_window()
         run_automation()
     except KeyboardInterrupt:
         logging.info("用户中断操作")
