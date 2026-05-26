@@ -6,3 +6,5 @@ venv
 main.build
 main.dist
 main.exe
+.claude
+.vscode
